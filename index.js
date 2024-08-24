@@ -3,6 +3,7 @@ const mysql = require('mysql');
 const { exec } = require('child_process');
 const app = express();
 const port = 3000;
+const RateLimit = require('express-rate-limit');
 
 // MySQL connection setup (replace with your own credentials)
 const connection = mysql.createConnection({
@@ -41,6 +42,13 @@ app.get('/random', (req, res) => {
     const randomNumber = Math.random(); // Insecure random number generation
     res.send(`Random number: ${randomNumber}`);
 });
+
+// Apply rate limiter to all routes
+const limiter = RateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // max 100 requests per windowMs
+});
+app.use(limiter);
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
