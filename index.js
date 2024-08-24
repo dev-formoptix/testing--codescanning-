@@ -1,6 +1,9 @@
 const express = require('express');
 const mysql = require('mysql');
 const { exec } = require('child_process');
+const crypto = require('crypto');
+const mongoSanitize = require('express-mongo-sanitize');
+const helmet = require("helmet"); // Added helmet library
 const app = express();
 const port = 3000;
 
@@ -16,7 +19,7 @@ connection.connect();
 // SQL Injection Vulnerable Endpoint
 app.get('/user', (req, res) => {
     const userId = req.query.id;
-    const query = `SELECT * FROM users WHERE id = ${userId}`; // Vulnerable to SQL injection
+    const query = `SELECT * FROM users WHERE id = ${connection.escape(userId)}`; // Sanitize user input
     connection.query(query, (err, results) => {
         if (err) throw err;
         res.send(results);
@@ -38,9 +41,13 @@ app.get('/exec', (req, res) => {
 
 // Insecure Random Number Generation
 app.get('/random', (req, res) => {
-    const randomNumber = Math.random(); // Insecure random number generation
+    const randomNumber = crypto.randomInt(0, 100); // Secure random number generation
     res.send(`Random number: ${randomNumber}`);
 });
+
+app.use(mongoSanitize());
+
+app.use(helmet()); // Added helmet middleware
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
