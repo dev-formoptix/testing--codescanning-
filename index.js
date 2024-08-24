@@ -4,7 +4,7 @@ const { exec } = require('child_process');
 const app = express();
 const port = 3000;
 
-// MySQL connection setup (replace with your own credentials)
+// MySQL connection setup
 const connection = mysql.createConnection({
     host: 'localhost',
     user: process.env.DB_USER,
@@ -27,7 +27,8 @@ app.get('/user', (req, res) => {
 // Command Injection Vulnerable Endpoint
 app.get('/exec', (req, res) => {
     const cmd = req.query.cmd;
-    exec(cmd, (err, stdout, stderr) => { // Vulnerable to command injection
+    const args = cmd.split(" "); // Split the command into array of arguments
+    exec(args[0], args.slice(1), (err, stdout, stderr) => {
         if (err) {
             res.send(`Error: ${stderr}`);
             return;
