@@ -1,7 +1,6 @@
 const express = require('express');
 const mysql = require('mysql');
 const { exec } = require('child_process');
-
 const app = express();
 const port = 3000;
 
@@ -10,9 +9,8 @@ const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: 'password',
-    database: 'test' 
+    database: 'test'
 });
-
 connection.connect();
 
 // SQL Injection Vulnerable Endpoint
@@ -27,7 +25,8 @@ app.get('/user', (req, res) => {
 
 // Command Injection Vulnerable Endpoint
 app.get('/exec', (req, res) => {
-    const cmd = req.query.cmd;
+    let cmd = req.query.cmd;
+    cmd = cmd.replace(/[`$();&|]+/g, ''); // Clean user-provided data
     exec(cmd, (err, stdout, stderr) => { // Vulnerable to command injection
         if (err) {
             res.send(`Error: ${stderr}`);
