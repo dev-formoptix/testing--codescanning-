@@ -3,6 +3,7 @@ const mysql = require('mysql');
 const { exec } = require('child_process');
 const crypto = require('crypto');
 const mongoSanitize = require('express-mongo-sanitize');
+const helmet = require("helmet"); // Added helmet library
 
 const app = express();
 const port = 3000;
@@ -46,6 +47,8 @@ app.get('/random', (req, res) => {
 });
 
 app.use(mongoSanitize());
+
+app.use(helmet()); // Added helmet middleware
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
