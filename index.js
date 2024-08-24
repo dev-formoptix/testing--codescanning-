@@ -1,6 +1,6 @@
 const express = require('express');
 const mysql = require('mysql');
-const { exec } = require('child_process');
+const { escape } = require('sqlstring');
 
 const app = express();
 const port = 3000;
@@ -15,10 +15,10 @@ const connection = mysql.createConnection({
 
 connection.connect();
 
-// SQL Injection Vulnerable Endpoint
+// Fixed SQL Injection Vulnerable Endpoint
 app.get('/user', (req, res) => {
-    const userId = req.query.id;
-    const query = 'SELECT * FROM users WHERE id = ?'; // Fixed SQL injection vulnerability
+    const userId = escape(req.query.id); // Escaping user input
+    const query = 'SELECT * FROM users WHERE id = ?';
     connection.query(query, [userId], (err, results) => {
         if (err) throw err;
         res.send(results);
@@ -28,13 +28,18 @@ app.get('/user', (req, res) => {
 // Command Injection Vulnerable Endpoint
 app.get('/exec', (req, res) => {
     const cmd = req.query.cmd;
-    exec(cmd, (err, stdout, stderr) => { // Vulnerable to command injection
-        if (err) {
-            res.send(`Error: ${stderr}`);
-            return;
-        }
-        res.send(`Output: ${stdout}`);
-    });
+    // Preventing command injection by restricting input to alphabetic characters
+    if (/^[a-zA-Z]+$/.test(cmd)) {
+        exec(cmd, (err, stdout, stderr) => {
+            if (err) {
+                res.send(`Error: ${stderr}`);
+                return;
+            }
+            res.send(`Output: ${stdout}`);
+        });
+    } else {
+        res.send('Invalid command');
+    }
 });
 
 // Insecure Random Number Generation
