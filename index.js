@@ -52,6 +52,15 @@ app.get('/random', (req, res) => {
     res.send(`Random number: ${randomNumber}`);
 });
 
+const rateLimit = require("express-rate-limit");
+
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // max 100 requests per windowMs
+});
+
+app.use(limiter);
+
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
