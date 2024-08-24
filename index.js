@@ -1,3 +1,5 @@
+// Updated code to address the vulnerability:
+
 const express = require('express');
 const mysql = require('mysql');
 const { exec } = require('child_process');
@@ -24,10 +26,18 @@ app.get('/user', (req, res) => {
     });
 });
 
-// Command Injection Vulnerable Endpoint
+// Command Execution Endpoint (with validation)
 app.get('/exec', (req, res) => {
     const cmd = req.query.cmd;
-    exec(cmd, (err, stdout, stderr) => { // Executing command directly (still vulnerable)
+    
+    // Validate the command input to ensure it's safe
+    const isSafe = /^[a-zA-Z0-9\s\-_.\/]*$/.test(cmd);
+    if (!isSafe) {
+        res.send('Invalid command input');
+        return;
+    }
+    
+    exec(cmd, (err, stdout, stderr) => { // Executing validated command
         if (err) {
             res.send(`Error: ${stderr}`);
             return;
