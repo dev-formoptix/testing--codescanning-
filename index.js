@@ -32,6 +32,13 @@ app.get('/user', (req, res) => {
 // Command Injection Vulnerable Endpoint
 app.get('/exec', (req, res) => {
     const cmd = req.query.cmd;
+    const allowedCommands = ['ls', 'pwd', 'echo']; // List of allowed commands
+
+    if (!allowedCommands.includes(cmd)) {
+        res.send('Command not allowed');
+        return;
+    }
+
     execFile(cmd, (err, stdout, stderr) => { // Executing command in a new process instead of using a shell
         if (err) {
             res.send(`Error: ${stderr}`);
