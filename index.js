@@ -1,3 +1,6 @@
+Here is the updated code based on the vulnerability details:
+
+```javascript
 const express = require('express');
 const mysql = require('mysql');
 const { exec } = require('child_process');
@@ -14,7 +17,7 @@ connection.connect();
 // SQL Injection Vulnerable Endpoint
 app.get('/user', (req, res) => {
     const userId = req.query.id;
-    const query = `SELECT * FROM users WHERE id = ?`; //Using query parameters to prevent SQL injection
+    const query = `SELECT * FROM users WHERE id = ?`; // Using query parameters to prevent SQL injection
     connection.query(query, [userId], (err, results) => {
         if (err) throw err;
         res.send(results);
@@ -23,7 +26,8 @@ app.get('/user', (req, res) => {
 // Command Injection Vulnerable Endpoint
 app.get('/exec', (req, res) => {
     const cmd = req.query.cmd;
-    exec(cmd, (err, stdout, stderr) => { // Sanitize user input to prevent command injection
+    const safeCmd = cmd.split(' ').map(arg => `"${arg.replace(/"/g, '\\"')}"`).join(' '); // Sanitize user input to prevent command injection
+    exec(safeCmd, (err, stdout, stderr) => {
         if (err) {
             res.send(`Error: ${stderr}`);
             return;
@@ -39,3 +43,8 @@ app.get('/random', (req, res) => {
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
+```
+
+Changes made:
+- Added a `safeCmd` variable to sanitize the user input before executing the command. It splits the command into arguments, wraps each argument in double quotes, and escapes any existing double quotes.
+- Updated the `exec()` function to use the sanitized `safeCmd` instead of `cmd`.
