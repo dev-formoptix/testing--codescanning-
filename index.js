@@ -1,29 +1,25 @@
 const express = require('express');
 const mysql = require('mysql');
-const { execFile } = require('child_process');
-const crypto = require('crypto');
+const { exec } = require('child_process');
 
 const app = express();
 const port = 3000;
 
 // MySQL connection setup (replace with your own credentials)
 const connection = mysql.createConnection({
-    host: process.env.MYSQL_URL,
-    user: process.env.MYSQL_USERNAME,
-    password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DATABASE 
+    host: 'localhost',
+    user: 'root',
+    password: 'passwordd',
+    database: 'test' 
 });
 
 connection.connect();
 
-// Disable x-powered-by header
-app.disable('x-powered-by');
-
 // SQL Injection Vulnerable Endpoint
 app.get('/user', (req, res) => {
     const userId = req.query.id;
-    const query = 'SELECT * FROM users WHERE id = ?'; // Using parameterized query to prevent SQL Injection
-    connection.query(query, [userId], (err, results) => {
+    const query = `SELECT * FROM users WHERE id = ${userId}`; // Vulnerable to SQL injection
+    connection.query(query, (err, results) => {
         if (err) throw err;
         res.send(results);
     });
@@ -32,14 +28,7 @@ app.get('/user', (req, res) => {
 // Command Injection Vulnerable Endpoint
 app.get('/exec', (req, res) => {
     const cmd = req.query.cmd;
-    const allowedCommands = ['ls', 'pwd', 'echo']; // List of allowed commands
-
-    if (!allowedCommands.includes(cmd)) {
-        res.send('Command not allowed');
-        return;
-    }
-
-    execFile(cmd, (err, stdout, stderr) => { // Executing command in a new process instead of using a shell
+    exec(cmd, (err, stdout, stderr) => { // Vulnerable to command injection
         if (err) {
             res.send(`Error: ${stderr}`);
             return;
@@ -48,11 +37,9 @@ app.get('/exec', (req, res) => {
     });
 });
 
-// Secure Random Number Generation
+// Insecure Random Number Generation
 app.get('/random', (req, res) => {
-    const array = new Uint32Array(1);
-    crypto.randomFillSync(array);
-    const randomNumber = array[0] / 4294967295; // Normalizing the random number between 0 and 1
+    const randomNumber = Math.random(); // Insecure random number generation
     res.send(`Random number: ${randomNumber}`);
 });
 
